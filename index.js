@@ -32,11 +32,8 @@ bot.on("ready", async () => {
     bot.user.setActivity(`${bot.prefix} help`);
 
     bot.guilds.map(async (guild, key, collection) => {
-        let channel = guild.channels.find('name', config.newsChannel);
+        guildPrepare(guild);
 
-        guild.newsChannel = channel ? channel : guild.systemChannel;
-        guild.streamRole = guild.roles.find('name', config.streamerRole);
-        guild.botReactions = new Discord.Collection();
         let reactionModels = await reactionModel.find({
             guild : guild.id
         });
@@ -48,27 +45,12 @@ bot.on("ready", async () => {
                 guild.botReactions.set(model.word, emoji)
             }
         });
-    
-        guild.commands = new Discord.Collection();
-
-        for (let command of bot.commands.keys()) {
-            guild.commands.set(command, true);
-        }
     });
 });
 
 //whenever the client joins a guild
 bot.on("guildCreate", async guild => {
-    let channel = guild.channels.find('name', config.newsChannel);
-
-    guild.newsChannel = channel ? channel : guild.systemChannel;
-    guild.streamRole = guild.roles.find('name', config.streamerRole);
-    guild.botReactions = new Discord.Collection();
-    guild.commands = new Discord.Collection();
-
-    for (let command of bot.commands.keys()) {
-        guild.commands.set(command, true);
-    }
+    guildPrepare(guild);
 })
 
 
@@ -111,9 +93,9 @@ bot.on("presenceUpdate", (oldMember, newMember) => {
     let oldGame = oldMember.presence.game,
         oldStream = oldGame ? oldGame.streaming : false, //streamed
         newGame = newMember.presence.game,
-        newStream = newGame ? newGame.streaming : false //streaming now
-        guild = newMember.guild;
-        streamRole = guild.streamRole
+        newStream = newGame ? newGame.streaming : false, //streaming now
+        guild = newMember.guild,
+        streamRole = guild.streamRole;
 
     if (!oldStream && newStream) {
         newMember.addRole(streamRole);
@@ -155,6 +137,19 @@ let postStreamLive = (stream, channel) => {
         channel.send(`${stream.channel.url}`);
     }
 };
+
+function guildPrepare(guild) {
+    let channel = guild.channels.find('name', config.newsChannel);
+
+    guild.newsChannel = channel ? channel : guild.systemChannel;
+    guild.streamRole = guild.roles.find('name', config.streamerRole);
+    guild.botReactions = new Discord.Collection();
+    guild.commands = new Discord.Collection();
+
+    for (let command of bot.commands.keys()) {
+        guild.commands.set(command, true);
+    }
+}
 
 
 bot.login(config.token);

@@ -63,6 +63,23 @@ bot.on("message", async message => {
             `На самом деле команды не выполняются в личных сообщениях, попробуй лучше на сервере`);
         return;
     }
+    let stream = {channel:{}};
+    let channel = message.channel;
+    let hypeEmoji = channel.guild.emojis.find('name', 'wow'),
+    streamTime = new Date(stream.created_at),
+    embed = new Discord.RichEmbed()
+.setColor("#9e07fc")
+.setDescription(
+    `${hypeEmoji} **${stream.channel.display_name}** начал(а) стрим!  ${hypeEmoji}`)
+.addField("Name", `***Комната ожидания саске***`, true)
+.addField("Link", `🔗 https://www.twitch.tv/fletcheriii 🔗`, true)
+.addField("Game", stream.game, true)
+.addField("Views", stream.channel.views, true)
+.addField("Followers", stream.channel.followers, true)
+.setFooter(streamTime.toUTCString());
+
+channel.send(embed);
+channel.send(`${stream.channel.url}`);
 
     let prefix = bot.prefix;
         messageArray = message.content.split(" "),

@@ -63,7 +63,7 @@ module.exports.run = async (bot, message, args) => {
                 
                 //delete reaction by [word]
                 case 'удалить': {
-                    let word = args[0];
+                    let word = args.join(' ');
 
                     if(!word) {
                         noSpecifiedParams();

@@ -65,7 +65,7 @@ bot.on("ready", async () => {
                 guild : guild.id   
             }).sort({number : -1}).limit(1);
 
-            if (subdayMaxNumber) {
+            if (subdayMaxNumber.length > 0) {
                 guild.subdayNumber = subdayMaxNumber[0].number + 1;
             }
         }

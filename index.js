@@ -5,7 +5,8 @@ const url = require("url");
 const twitchHelper = require("./twitch");
 require('./mongo');
 const reactionModel = require('./models/reaction');
-
+const settingsModel = require('./models/settings');
+const subdayModel   = require('./models/subday');
 
 const bot = new Discord.Client();
 bot.prefix = config.prefix;
@@ -32,8 +33,9 @@ bot.on("ready", async () => {
     bot.user.setActivity(`${bot.prefix} help`);
 
     bot.guilds.map(async (guild, key, collection) => {
-        guildPrepare(guild);
+        await guildPrepare(guild);
 
+        //prepare existing reactions
         let reactionModels = await reactionModel.find({
             guild : guild.id
         });
@@ -45,12 +47,34 @@ bot.on("ready", async () => {
                 guild.botReactions.set(model.word, emoji)
             }
         });
+
+        //prepare existing guild's subday
+        let subdayModels = await subdayModel.find({
+            guild : guild.id,
+            current : true,
+        });
+
+        subdayModels.forEach((model, index) => {
+            guild.subday.set(model.user, {game : model.game, win : model.win});
+        });
+        
+        if(subdayModels.length > 0) {
+            guild.subdayNumber = subdayModels[0].number;
+        } else {
+            let subdayMaxNumber = await subdayModel.find({
+                guild : guild.id   
+            }).sort({number : -1}).limit(1);
+
+            if (subdayMaxNumber) {
+                guild.subdayNumber = subdayMaxNumber[0].number + 1;
+            }
+        }
     });
 });
 
 //whenever the client joins a guild
 bot.on("guildCreate", async guild => {
-    guildPrepare(guild);
+    await guildPrepare(guild);
 })
 
 
@@ -64,17 +88,25 @@ bot.on("message", async message => {
         return;
     }
 
-    let prefix = bot.prefix;
+    let prefix = bot.prefix,
+        shortPrefix = config.shortPrefix,
         messageArray = message.content.split(" "),
         guild = message.guild;
-
+        
     //bot commands
     if(messageArray[0] === prefix) {
         let cmd = messageArray[1];
         let args = messageArray.slice(2);
         let commandFile = bot.commands.get(cmd);
+
         if (commandFile) commandFile.run(bot, message, args);
-    } 
+    } else if(messageArray[0].startsWith(shortPrefix)) {
+        let cmd = messageArray[0].slice(shortPrefix.length);
+        let args = messageArray.slice(1);
+        let commandFile = bot.commands.get(cmd);
+
+        if (commandFile && commandFile.help.shortPrefix) commandFile.run(bot, message, args);
+    }
     //special cases
     else {
         guild.botReactions.forEach(async (emoji, word) => {
@@ -118,7 +150,12 @@ bot.on("presenceUpdate", (oldMember, newMember) => {
 });
 //#endregion
 
-//create new embed message about stream
+/**
+ * Create new embed message about stream
+ * 
+ * @param {Object} stream 
+ * @param {Discord.Channel} channel 
+ */
 let postStreamLive = (stream, channel) => {
     if(stream) {            
         let hypeEmoji = channel.guild.emojis.find('name', 'wow'),
@@ -132,7 +169,6 @@ let postStreamLive = (stream, channel) => {
         .addField("Game", stream.game, true)
         .addField("Views", stream.channel.views, true)
         .addField("Followers", stream.channel.followers, true)
-        .addField("Link", stream.channel.url)
         .setFooter(streamTime.toUTCString());
 
         channel.send(embed);
@@ -140,12 +176,47 @@ let postStreamLive = (stream, channel) => {
     }
 };
 
-function guildPrepare(guild) {
+/**
+ * @param {Discord.Guild} guild 
+ */
+async function guildPrepare(guild) {
     let channel = guild.channels.find('name', config.newsChannel);
 
-    guild.newsChannel = channel ? channel : guild.systemChannel;
-    guild.streamRole = guild.roles.find('name', config.streamerRole);
+    let settings = await settingsModel.findOne({
+        guild : guild.id
+    });
+
+    //if guild already exist -> set settings
+    if (settings) {
+        if(settings.newsChannel) guild.newsChannel = guild.channels.get(settings.newsChannel);
+        else guild.newsChannel = null;
+        
+        if(settings.streamerRole) guild.streamRole = guild.roles.get(settings.streamerRole);
+        else guild.streamRole = null;
+
+        if(settings.subscriberRole) guild.subscriberRole = guild.roles.get(settings.subscriberRole);
+        else guild.subscriberRole = null;
+
+        guild.settings = settings;
+    } 
+    //create new settingsModel in db + init required fields for guild
+    else {
+        guild.newsChannel = channel ? channel : guild.systemChannel;
+        guild.streamRole = guild.roles.find('name', config.streamerRole);
+        guild.subscriberRole = guild.roles.find('name', config.subscriberRole);
+
+        settingsModel({
+            newsChannel : guild.newsChannel.id,
+            subscriberRole : guild.subscriberRole ? guild.subscriberRole.id : null,
+            streamerRole : guild.streamRole ? guild.streamRole.id : null,
+            guild : guild.id
+        }).save();
+    }
+
+    //no settingsModel parametes
     guild.botReactions = new Discord.Collection();
+    guild.subday = new Discord.Collection();
+    guild.subdayNumber = 1;
     guild.commands = new Discord.Collection();
 
     for (let command of bot.commands.keys()) {

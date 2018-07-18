@@ -1,5 +1,10 @@
 const Discord = require('discord.js');
 
+/**
+ * @param {Discord.Client} bot 
+ * @param {Discord.Message} message 
+ * @param {string[]} args 
+ */
 module.exports.run = async (bot, message, args) => {
     let helpResponse = 'All my commands : \n',
         embedMessage = new Discord.RichEmbed();

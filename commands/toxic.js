@@ -5,6 +5,11 @@ Array.prototype.random = function () {
     return this[Math.floor((Math.random()*this.length))];
 }
 
+/**
+ * @param {Discord.Client} bot 
+ * @param {Discord.Message} message 
+ * @param {string[]} args 
+ */
 module.exports.run = async (bot, message, args) => {
     let guild = message.guild,
         toxicUser = args[0],

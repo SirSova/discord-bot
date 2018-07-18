@@ -1,27 +1,36 @@
 const mongoose = require('mongoose');
 
-const ReactionsSchema = new mongoose.Schema({
+const SubdaysSchema = new mongoose.Schema({
     guild : {
         type : Number,
         required : true
     },
-    emoji : {
+    game : {
         type : String,
         required : true,
         trim : true
     },
-    word : {
+    user : {
         type : String,
         required : true,
         trim : true
     },
-    isCustomEmoji: {
+    number : {
+        type : Number,
+        required : true,
+    },
+    current : {
         type : Boolean,
         required : true,
-        default : false,
+        default : true
+    },
+    win : {
+        type : Boolean,
+        required : true,
+        default : false
     }
 }, {
     versionKey : false,
 });
 
-module.exports = mongoose.model('reactions', ReactionsSchema);
+module.exports = mongoose.model('subday', SubdaysSchema);

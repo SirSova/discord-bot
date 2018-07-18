@@ -2,6 +2,11 @@ const Discord = require('discord.js');
 const twitchHelper = require("../twitch");
 const url = require('url');
 
+/**
+ * @param {Discord.Client} bot 
+ * @param {Discord.Message} message 
+ * @param {string[]} args 
+ */
 module.exports.run = async (bot, message, args) => {
     if (!args[0]) {
         let syntaxEmbed = new Discord.RichEmbed().setDescription(`${bot.prefix}  ${this.help.syntax}`);
@@ -32,6 +37,6 @@ module.exports.help = {
     name: "live",
     syntax : "live [twitch канал]",
     description : "посмотрим, подрубил ли мой любимый стример",
-    emoji : "🎮",
+    emoji : "👤",
     permission : "VIEW_CHANNEL"
 }

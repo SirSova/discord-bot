@@ -2,6 +2,11 @@ const Discord = require('discord.js');
 const actions = ['добавить', 'удалить', 'показать'];
 const model = require('../models/reaction');
 
+/**
+ * @param {Discord.Client} bot 
+ * @param {Discord.Message} message 
+ * @param {string[]} args 
+ */
 module.exports.run = async (bot, message, args) => {
     let curChannel = message.channel;
     if(message.member.hasPermission(this.help.permission)) {

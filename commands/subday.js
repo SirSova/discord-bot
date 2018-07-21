@@ -75,7 +75,7 @@ function embedSubdayGames(subday, guild) {
     let i = 0;
 
     subday.forEach((value, user) => {
-        gamesStr += `${++i} . ${resolveUserName(guild, user)}  |  ${value.game} ${value.win ? '***(win)***' : ''}\n`;
+        gamesStr += `${++i} . ${resolveUserName(guild, user)}  |  ${value.game} ${value.win ? `***(win${value.order ? `*** ${value.order} игра***` : ''})***` : ''}\n`;
     });
 
     embed.setDescription(gamesStr);
@@ -243,6 +243,7 @@ module.exports.run = async (bot, message, args) => {
                     args.shift();
                     if (message.member.hasPermission('ADMINISTRATOR')) {
                         let notFound = [];
+                        let notOrder = [];
                         let winners = [];
                         
                         if (args.length <= 0) {
@@ -250,7 +251,15 @@ module.exports.run = async (bot, message, args) => {
                             return;
                         }
                         
-                        args.forEach(async (value, index) => {
+                        args.forEach(async (value, index) => {  
+                            let order = value.match(/(.*?)\./);
+
+                            if (order === null) {
+                                notOrder.push(value);
+                                return;
+                            }
+
+                            value = value.slice(order[0].length);
                             let guildMember = guild.members.find('displayName', value);
                             let user = guildMember ? guildMember.id : value;
                             let winner = guild.subday.get(user);
@@ -258,10 +267,11 @@ module.exports.run = async (bot, message, args) => {
                             if (winner) {
                                 winners.push(value);
                                 winner.win = true;
+                                winner.order = order[1];
 
                                 await subdayModel.updateOne(
                                     {guild : guild.id, user : user , number : guild.subdayNumber},
-                                    {win : true}
+                                    {win : true, order : order[1]}
                                 )
                             } else {
                                 notFound.push(value);
@@ -269,7 +279,8 @@ module.exports.run = async (bot, message, args) => {
                         })
 
                         curChannel.send((winners.length > 0 ? `Поздравляем ${winners.join(', ')} с победой!🎉` : '') + 
-                                        (notFound.length > 0 ? `Не смогла найти : ${notFound.join(', ')} 😥` : ''))
+                                        (notOrder.length > 0 ? `Вы не указали порядок для : ${notOrder.join(', ')}` : '') +
+                                        (notFound.length > 0 ? `Не смогла найти : ${notFound.join(', ')} 😥` : ''));
                     } else {
                         curChannel.send(`${message.author}, выбирать победные игры могут только администраторы`)
                     }
@@ -300,10 +311,11 @@ module.exports.run = async (bot, message, args) => {
                                 if (loser.win) {
                                     losers.push(value);
                                     loser.win = false;
+                                    loser.order = null;
 
                                     await subdayModel.updateOne(
                                         {guild : guild.id, user : user, number : guild.subdayNumber},
-                                        {win : false}
+                                        {win : false, order : null}
                                     )
                                 } else {
                                     notLosers.push(value);
@@ -343,6 +355,28 @@ module.exports.run = async (bot, message, args) => {
                     } else {
                         curChannel.send(`Я не нашла предыдущий subday 😧`);
                     }
+                    break;
+
+                /**
+                 * WINNERS ONLY
+                 */
+                case '-winners':
+                case '-победители':
+                    let winners = guild.subday.filter((value, user) => {
+                        return value.win === true;
+                    }).sort((a, b) => {
+                        if (a.order && b.order) {
+                            return a.order > b.order ? 1 : -1;
+                        }
+                        return 1;
+                    });
+                    if (winners.size > 0) {
+                        let embedWinners = embedSubdayGames(winners, guild);
+                        curChannel.send(embedWinners);
+                    } else {
+                        curChannel.send(`Пока нет победителей 😕`);
+                    }
+
                     break;
             };
         } else {

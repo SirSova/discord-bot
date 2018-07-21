@@ -55,7 +55,7 @@ bot.on("ready", async () => {
         });
 
         subdayModels.forEach((model, index) => {
-            guild.subday.set(model.user, {game : model.game, win : model.win});
+            guild.subday.set(model.user, {game : model.game, win : model.win, order : model.order});
         });
         
         if(subdayModels.length > 0) {

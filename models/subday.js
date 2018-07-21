@@ -28,6 +28,11 @@ const SubdaysSchema = new mongoose.Schema({
         type : Boolean,
         required : true,
         default : false
+    },
+    order : {
+        type : String,
+        default : null,
+        required : false,
     }
 }, {
     versionKey : false,

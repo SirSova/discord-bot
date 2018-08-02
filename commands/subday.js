@@ -136,7 +136,7 @@ module.exports.run = async (bot, message, args) => {
                     if (guild.subday) {
                         //set previous games status current : false;
                         await subdayModel.updateMany(
-                            { current : true },
+                            { current : true, guild : guild.id },
                             { current : false } 
                         );
                     }

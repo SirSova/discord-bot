@@ -48,7 +48,7 @@ function resolveUserName(guild, user) {
 async function saveGame(guild, user, game) {
     if (guild.subday.has(user)) {
         await subdayModel.updateOne(
-            { guild : guild.id, user : user },
+            { guild : guild.id, user : user, number : guild.subdayNumber },
             { game: game }
         );
     } else {

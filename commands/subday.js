@@ -5,6 +5,7 @@ const request = require('request');
 const config = require('../config.json');
 const { BitlyClient } = require('bitly');
 const bitly = new BitlyClient(config.bitlyToken);
+const url = require('url');
 
 /** 
  * @param {Discord.Guild} guild 
@@ -22,13 +23,15 @@ async function removeGame(guild, id) {
  * @param {Discord.Collection} collection 
  */
 function createWheelLink(guild) {
-    let link = wheelUrl;
+    let link = new url.URL(wheelUrl);
     let i = 1;
-    guild.subday.forEach((value, user) => {
-        link += `${i === 1 ? '?' : '&' }c${i++}=` + encodeURIComponent(value.game + ` (${resolveUserName(guild, user)})`);
+    let mapParams = guild.subday.map((value, user) => {
+        return [`c${i++}`, `${value.game} (${resolveUserName(guild, user)})`];
     });
+    params = new url.URLSearchParams(mapParams);
+    link.search = params;
 
-    return link;
+    return link.href;
 }
 
 /**
@@ -156,7 +159,11 @@ module.exports.run = async (bot, message, args) => {
                         .then((res) => {
                             curChannel.send(`Крутите колесо : <${res.url}>`);
                         })
-                        .catch((err) => console.log(err));
+                        .catch(
+                            (err) => {
+                                curChannel.send(`Ссылка сломалась, потому что превышен лимит букв.`);
+                                return console.log(err)
+                            });
                     break;
 
                 /**

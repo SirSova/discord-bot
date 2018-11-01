@@ -10,6 +10,7 @@ const model = require('../models/reaction');
 module.exports.run = async (bot, message, args) => {
     let curChannel = message.channel;
     if(message.member.hasPermission(this.help.permission)) {
+        let guild = message.guild;
         let action = args.shift();
         let noSpecifiedParams = () => {
             let syntaxEmbed = new Discord.RichEmbed().setDescription(`${bot.prefix}  ${this.help.syntax}`);

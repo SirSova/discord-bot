@@ -69,6 +69,14 @@ async function saveGame(guild, user, game) {
 }
 
 /**
+ * @param {string} text 
+ */
+function quotemeta(text) {
+    return text.replace(/_[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")
+}
+
+
+/**
  * @param {Discord.Collection} subday 
  * @param {Discord.Guild} guild 
  */
@@ -81,7 +89,7 @@ function embedSubdayGames(subday, guild) {
         gamesStr += `${++i} . ${resolveUserName(guild, user)}  |  ${value.game} ${value.win ? `***(win${value.order ? `*** ${value.order} игра***` : ''})***` : ''}\n`;
     });
 
-    embed.setDescription(gamesStr);
+    embed.setDescription(quotemeta(gamesStr));
     return embed;
 }
 

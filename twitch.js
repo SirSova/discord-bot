@@ -3,26 +3,28 @@ const config = require("./config.json");
 Twitch.clientID = config.clientId;
 
 //find stream by userName and create post
-module.exports.twitchStreamFunc = (userName, channel, func) => {
+module.exports.twitchStreamFunc = (userName) => {
     //find channel by name 
-    Twitch.users.usersByName({users:userName}, (err,data) => {
-        if(data.error || err) {
-            console.log(data, err);
-            return;
-        }
-        user = data.users.shift();
-            
-        //find channel by userId
-         Twitch.streams.channel({channelID: user._id}, (err, data) => {
-            if (data.error || err) {
-                console.log(data, err);
-                return;
-            }
-            stream = data.stream;
 
-            func(stream, channel);
-        })
-        
+    return new Promise((resolve, reject) => {
+        Twitch.users.usersByName({users:userName}, (err,data) => {
+            if(data.error || err) {
+                return reject(err);
+            }
+            user = data.users.shift();
+
+            //find channel by userId
+             Twitch.streams.channel({channelID: user._id}, (err, data) => {
+                if (data.error || err) {
+                    return reject(err);
+                }
+                stream = data.stream;
+
+                return resolve(stream);
+            })
+            
+        });
     });
+   
     
 }

@@ -137,8 +137,20 @@ bot.on("presenceUpdate", (oldMember, newMember) => {
 
             if (streamUrl.hostname === "www.twitch.tv") {
                 let streamName = streamUrl.pathname.split('\\').pop().split('/').pop();
+                const dayInTime = 86400;
+                let lastTime = guild.lastOwnerStreamNotificationTime ? new Date(guild.lastOwnerStreamNotificationTime) : null,
+                    now = new Date();
 
-                twitchHelper.twitchStreamFunc(streamName, guild.newsChannel, postStreamLive);
+                if (!lastTime && (now - lastTime) / 1000 > dayInTime / 2) {
+                    twitchHelper.twitchStreamFunc(streamName)
+                        .then((stream) => {
+                            postStreamLive(stream, guild.newsChannel);
+                            guild.lastOwnerStreamNotificationTime = new Date();
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                        });
+                }
             }
         }
     }   
@@ -158,12 +170,17 @@ bot.on("presenceUpdate", (oldMember, newMember) => {
  */
 let postStreamLive = (stream, channel) => {
     if(stream) {            
-        let hypeEmoji = channel.guild.emojis.find('name', 'wow'),
+        let hypeEmoji = channel.guild.emojis.find('name', config.hypeEmoji || 'wow'),
             streamTime = new Date(stream.created_at),
-            embed = new Discord.RichEmbed()
+            description = `**${stream.channel.display_name}** начал(а) стрим!`;
+
+        if (hypeEmoji !== null) {
+            description = `${hypeEmoji} ${description} ${hypeEmoji}`;
+        }
+
+        let embed = new Discord.RichEmbed()
         .setColor("#9e07fc")
-        .setDescription(
-            `${hypeEmoji} **${stream.channel.display_name}** начал(а) стрим!  ${hypeEmoji}`)
+        .setDescription(description)
         .addField("Name", `***${stream.channel.status}***`, true)
         .addField("Link", `🔗 ${stream.channel.url} 🔗`, true)
         .addField("Game", stream.game, true)
@@ -189,13 +206,13 @@ async function guildPrepare(guild) {
     //if guild already exist -> set settings
     if (settings) {
         if(settings.newsChannel) guild.newsChannel = guild.channels.get(settings.newsChannel);
-        else guild.newsChannel = null;
+        else guild.newsChannel = channel ? channel : guild.systemChannel;
         
         if(settings.streamerRole) guild.streamRole = guild.roles.get(settings.streamerRole);
-        else guild.streamRole = null;
+        else guild.streamRole = guild.roles.find('name', config.streamerRole);
 
         if(settings.subscriberRole) guild.subscriberRole = guild.roles.get(settings.subscriberRole);
-        else guild.subscriberRole = null;
+        else guild.subscriberRole = guild.roles.find('name', config.subscriberRole);
 
         guild.settings = settings;
     } 

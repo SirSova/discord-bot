@@ -141,7 +141,7 @@ bot.on("presenceUpdate", (oldMember, newMember) => {
                 let lastTime = guild.lastOwnerStreamNotificationTime ? new Date(guild.lastOwnerStreamNotificationTime) : null,
                     now = new Date();
 
-                if (!lastTime && (now - lastTime) / 1000 > dayInTime / 2) {
+                if (!lastTime || (now - lastTime) / 1000 > dayInTime / 2) {
                     twitchHelper.twitchStreamFunc(streamName)
                         .then((stream) => {
                             postStreamLive(stream, guild.newsChannel);

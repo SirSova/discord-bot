@@ -109,8 +109,11 @@ bot.on("message", async message => {
     }
     //special cases
     else {
+        const regexPostfix = '([!\\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\\s]|$){1}';
+        const regexPrefix = '(^|[!\\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\\s]){1}';
+        
         guild.botReactions.forEach(async (emoji, word) => {
-            let wordRegexp = new RegExp(word + '([!\\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\\s]|$){1}', 'i');
+            let wordRegexp = new RegExp(regexPrefix + word + regexPostfix, 'i');
 
             if(message.content.match(wordRegexp)) {
                 await message.react(emoji);

@@ -6,6 +6,7 @@ const config = require('../config.json');
 const { BitlyClient } = require('bitly');
 const bitly = new BitlyClient(config.bitlyToken);
 const url = require('url');
+const shortPrefix = config.shortPrefix ? config.shortPrefix : '';
 
 /** 
  * @param {Discord.Guild} guild 
@@ -93,6 +94,23 @@ function embedSubdayGames(subday, guild) {
     return embed;
 }
 
+function showAllSubdayGames( guild, channel) {
+    if (guild.subday.size <= 0 ) {
+        channel.send(`Список игр на Subday пуст`);
+        return;
+    }
+
+    let embed = embedSubdayGames(guild.subday, guild);
+    channel.send(embed);
+}
+
+function addGameToSubday(game, guild, user, message, channel) {
+    saveGame(guild, user, game);
+
+    channel.send(`${message.author} , игра **${game}** добавлена`);
+    message.react('➕');
+}
+
 /**
  * @param {Discord.Client} bot 
  * @param {Discord.Message} message 
@@ -127,17 +145,21 @@ module.exports.run = async (bot, message, args) => {
                 /**
                  * ALL GAMES
                  */
+                case 'all':
+                    if (args.length <= 1) {
+                        showAllSubdayGames(guild, curChannel);
+                    } else {
+                        let game = args.join(' ');
+                        addGameToSubday(game, guild, user, message, curChannel);
+                    }
+
+                    break;
+
+                case '-a':
                 case '-all':
                 case '-show':
                 case '-показать':
-                    if (guild.subday.size <= 0 ) {
-                        curChannel.send(`Список игр на Subday пуст`);
-                        return;
-                    }
-
-                    let embed = embedSubdayGames(guild.subday, guild);
-                    curChannel.send(embed);
-
+                    showAllSubdayGames(guild, curChannel);
                     break;
 
                 /**
@@ -214,7 +236,7 @@ module.exports.run = async (bot, message, args) => {
                 case '-добавить':
                 default:
                     if (args[0] === '-add' || args[0] === '-добавить') args.shift();
-                    let errorMessage = () => curChannel.send(`${message.author} Вы не ввели игру или не указали действие 😕 Посмотрите как надо : ${this.help.syntax}`);
+                    let errorMessage = () => curChannel.send(`${message.author} Вы не ввели игру 😕 Все мои возможности можно узнать по команде ${shortPrefix}subday -help`);
 
                     //check on exist arguments
                     if(!args[0] || (args[0].startsWith('-') && !args[0].startsWith(userPrefix))) {
@@ -224,7 +246,7 @@ module.exports.run = async (bot, message, args) => {
 
                     //add the game for another user
                     if (args[0].startsWith(userPrefix)) {
-                        if (message.member.hasPermission('ADMINISTRATOR')) {
+                        if (message.member.hasPermission('ADMINISTRATOR')) {        
                             user = args.shift().slice(userPrefix.length);
                             let match = user.match(/<@(\d{17,19})?/)
                             let member = match ? guild.members.find(`id`, match[1]) : guild.members.find(`displayName`, user);
@@ -244,10 +266,7 @@ module.exports.run = async (bot, message, args) => {
                         return;
                     }
 
-                    saveGame(guild, user, game);
-
-                    curChannel.send(`${message.author} , игра **${game}** добавлена`);
-                    message.react('➕');
+                    addGameToSubday(game, guild, user, message, curChannel);
                     break;
 
                 /**
@@ -393,6 +412,11 @@ module.exports.run = async (bot, message, args) => {
                     }
 
                     break;
+
+                case '-help':
+                case '-помощь':
+                    curChannel.send(this.help.syntax);
+                    break;
             };
         } else {
             curChannel.send(`${message.author} Для заказа игр на сабдей подпишись канал 😉`)
@@ -404,6 +428,7 @@ module.exports.run = async (bot, message, args) => {
 
 module.exports.help = {
     name : "subday",
+    syntaxGame : ` ${shortPrefix}subday [game]`,
     syntax: "subday [Game] Заказать игру\n\t" + 
                     "[-all, -показать] Список заказанных игр\n\t" + 
                     "[-new] Обновить сабдей (admin only)\n\t" + 

@@ -16,6 +16,10 @@ const settingsSchema = new mongoose.Schema({
     streamerRole: {
         type : String,
         required : false,
+    },
+    subdayOrdersAvailable: {
+        type: Boolean,
+        required: false
     }
 }, {
     versionKey : false,

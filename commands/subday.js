@@ -105,10 +105,21 @@ function showAllSubdayGames( guild, channel) {
 }
 
 function addGameToSubday(game, guild, user, message, channel) {
+    if (!guild.subdayOrdersAvailable) {
+        channel.send(`Заказ игр заблокирован`);
+        return false;
+    }
     saveGame(guild, user, game);
 
     channel.send(`${message.author} , игра **${game}** добавлена`);
     message.react('➕');
+}
+
+function setSubdayOrdersAvailable(guild, bool) {
+    bool = !!bool;
+    guild.subdayOrdersAvailable = bool;
+    guild.settings.subdayOrdersAvailable = bool;
+    guild.settings.save();
 }
 
 /**
@@ -166,6 +177,17 @@ module.exports.run = async (bot, message, args) => {
                  * NEW SUBDAY
                  */
                 case '-new': 
+                    if(!message.member.hasPermission('ADMINISTRATOR')) {
+                        curChannel.send("Новый сабдей начать может только администратор");
+                        break;
+                    }
+
+                    additionalInfo = '';
+                    if (!guild.subdayOrdersAvailable) {
+                        setSubdayOrdersAvailable(guild, true);
+                        additionalInfo += 'Заказ игр разблокирован.';
+                    }
+                    
                     if (guild.subday) {
                         //set previous games status current : false;
                         await subdayModel.updateMany(
@@ -176,6 +198,7 @@ module.exports.run = async (bot, message, args) => {
 
                     guild.subday = new Discord.Collection();
                     guild.subdayNumber = guild.subdayNumber ? guild.subdayNumber + 1 : 1;
+                    curChannel.send(additionalInfo + `Запустила сабдей №${guild.subdayNumber}`);
                     break;
 
                 /**
@@ -417,6 +440,33 @@ module.exports.run = async (bot, message, args) => {
                 case '-помощь':
                     curChannel.send(this.help.syntax);
                     break;
+
+                case '-block':
+                case '-lock':
+                case '-заблокировать':
+                    if (!message.member.hasPermission('ADMINISTRATOR')) {
+                        curChannel.send(`Заблокировать заказ игр может только администартор`)
+                        break;
+                    }
+                    setSubdayOrdersAvailable(guild, false);
+                    curChannel.send(`Я выключила возможность заказывать игры`);
+                    break;
+
+                case '-unlock':
+                case '-unblock':
+                case '-разблокировать':
+                    if (!message.member.hasPermission('ADMINISTRATOR')) {
+                        curChannel.send(`Разблокировать заказ игр может только администартор`)
+                        break;
+                    }
+                    if (guild.subdayOrdersAvailable) {
+                        curChannel.send(`Заказ игр не заблокирован`);
+                        break;
+                    }
+                    setSubdayOrdersAvailable(guild, true);
+                    curChannel.send(`Заказ игр разблокирован`);
+                    break;
+                    
             };
         } else {
             curChannel.send(`${message.author} Для заказа игр на сабдей подпишись канал 😉`)
@@ -430,14 +480,16 @@ module.exports.help = {
     name : "subday",
     syntaxGame : ` ${shortPrefix}subday [game]`,
     syntax: "subday [Game] Заказать игру\n\t" + 
-                    "[-all, -показать] Список заказанных игр\n\t" + 
+                    "[all, -all, -показать] Список заказанных игр\n\t" + 
                     "[-new] Обновить сабдей (admin only)\n\t" + 
                     "[-wheel, -колесо] Ссылка на колесо \n\t" + 
                     "[-rm, -удалить] Удалить вашу игру\n\t" + 
                     "[-win, -победитель] [name1 name2] Выбрать победителей (admin)\n\t" +
                     "[-unwin, -lose] [name1 name2] Убрать статус победителя (admin)\n\t" +
                     "[-previous, -предыдущий] Посмотреть список игр прошлого сабдея\n\t" +
-                    "[-winners, -победители] Список победителей" ,
+                    "[-winners, -победители] Список победителей\n\t" +
+                    "[-block, -lock] Заблокировать заказ игр (admin)\n\t" +
+                    "[-unblock, -unlock] Разблокировать заказ игр (admin)" ,
     description : "заказывать игры на сабдей",
     emoji : "🎮",
     permission: "VIEW_CHANNEL",

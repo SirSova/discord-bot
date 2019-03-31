@@ -217,6 +217,9 @@ async function guildPrepare(guild) {
         if(settings.subscriberRole) guild.subscriberRole = guild.roles.get(settings.subscriberRole);
         else guild.subscriberRole = guild.roles.find('name', config.subscriberRole);
 
+        if(settings.subdayOrdersAvailable !== null || settings.subdayOrdersAvailable !== undefined) guild.subdayOrdersAvailable = settings.subdayOrdersAvailable;
+        else guild.subdayOrdersAvailable = true;
+
         guild.settings = settings;
     } 
     //create new settingsModel in db + init required fields for guild
@@ -224,12 +227,14 @@ async function guildPrepare(guild) {
         guild.newsChannel = channel ? channel : guild.systemChannel;
         guild.streamRole = guild.roles.find('name', config.streamerRole);
         guild.subscriberRole = guild.roles.find('name', config.subscriberRole);
+        guild.subdayOrdersAvailable = true;
 
         settingsModel({
             newsChannel : guild.newsChannel.id,
             subscriberRole : guild.subscriberRole ? guild.subscriberRole.id : null,
             streamerRole : guild.streamRole ? guild.streamRole.id : null,
-            guild : guild.id
+            guild : guild.id,
+            subdayOrdersAvailable : guild.subdayOrdersAvailable
         }).save();
     }
 

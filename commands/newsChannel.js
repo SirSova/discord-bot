@@ -36,6 +36,8 @@ module.exports.run = async (bot, message, args) => {
         }
 
         message.guild.newsChannel = chnl;
+        message.guild.settings.newsChannel = chnl.id;
+        message.guild.settings.save();
         curChannel.send(`Я изменила новостной канал на ${chnl}. Ждите анонсов здесь`);
     } else {
         curChannel.send(`${message.author} Изменять канал анонсов могут только администраторы 😉`);

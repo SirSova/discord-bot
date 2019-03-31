@@ -445,7 +445,7 @@ module.exports.run = async (bot, message, args) => {
                 case '-lock':
                 case '-заблокировать':
                     if (!message.member.hasPermission('ADMINISTRATOR')) {
-                        curChannel.send(`Заблокировать заказ игр может только администартор`)
+                        curChannel.send(`Заблокировать заказ игр может только администратор`)
                         break;
                     }
                     setSubdayOrdersAvailable(guild, false);
@@ -456,7 +456,7 @@ module.exports.run = async (bot, message, args) => {
                 case '-unblock':
                 case '-разблокировать':
                     if (!message.member.hasPermission('ADMINISTRATOR')) {
-                        curChannel.send(`Разблокировать заказ игр может только администартор`)
+                        curChannel.send(`Разблокировать заказ игр может только администратор`)
                         break;
                     }
                     if (guild.subdayOrdersAvailable) {

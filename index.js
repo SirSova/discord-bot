@@ -207,7 +207,7 @@ async function guildPrepare(guild) {
     let settings = await settingsModel.findOne({
         guild : guild.id
     });
-console.log(settings);
+
     //if guild already exist -> set settings
     if (settings) {
         if(settings.newsChannel) guild.newsChannel = guild.channels.get(settings.newsChannel);

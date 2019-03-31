@@ -149,6 +149,8 @@ bot.on("presenceUpdate", (oldMember, newMember) => {
                         .then((stream) => {
                             postStreamLive(stream, guild.newsChannel);
                             guild.lastOwnerStreamNotificationTime = new Date();
+                            guild.settings.lastOwnerStreamNotificationTime = guild.lastOwnerStreamNotificationTime;
+                            guild.settings.save();
                         })
                         .catch((err) => {
                             console.log(err);
@@ -205,7 +207,7 @@ async function guildPrepare(guild) {
     let settings = await settingsModel.findOne({
         guild : guild.id
     });
-
+console.log(settings);
     //if guild already exist -> set settings
     if (settings) {
         if(settings.newsChannel) guild.newsChannel = guild.channels.get(settings.newsChannel);
@@ -219,6 +221,9 @@ async function guildPrepare(guild) {
 
         if(settings.subdayOrdersAvailable !== null || settings.subdayOrdersAvailable !== undefined) guild.subdayOrdersAvailable = settings.subdayOrdersAvailable;
         else guild.subdayOrdersAvailable = true;
+
+        if(settings.lastOwnerStreamNotificationTime) guild.lastOwnerStreamNotificationTime = settings.lastOwnerStreamNotificationTime;
+        else guild.lastOwnerStreamNotificationTime = null;
 
         guild.settings = settings;
     } 
@@ -234,7 +239,8 @@ async function guildPrepare(guild) {
             subscriberRole : guild.subscriberRole ? guild.subscriberRole.id : null,
             streamerRole : guild.streamRole ? guild.streamRole.id : null,
             guild : guild.id,
-            subdayOrdersAvailable : guild.subdayOrdersAvailable
+            subdayOrdersAvailable : guild.subdayOrdersAvailable,
+            lastOwnerStreamNotificationTime : guild.lastOwnerStreamNotificationTime
         }).save();
     }
 

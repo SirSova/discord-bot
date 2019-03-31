@@ -20,6 +20,10 @@ const settingsSchema = new mongoose.Schema({
     subdayOrdersAvailable: {
         type: Boolean,
         required: false
+    },
+    lastOwnerStreamNotificationTime: {
+        type : Date,
+        required: false
     }
 }, {
     versionKey : false,
